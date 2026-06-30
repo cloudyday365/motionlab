@@ -1,0 +1,1193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhET-Style Motion & Relative Velocity Lab</title>
+    <style>
+        /* ==========================================================================
+           PhET OPTIMIZED COMPACT THEME & MAX VIEW LAYOUT ENGINE
+           ========================================================================== */
+        :root {
+            --phet-header-bg: #002244;
+            --phet-workspace-bg: #223344;
+            --phet-canvas-bg: #b0e0e6;
+            --phet-panel-bg: #eef4f8;
+            --phet-border: #445566;
+            --phet-text: #000000;
+            --phet-text-light: #ffffff;
+            --phet-yellow: #ffeb3b;
+            --phet-orange: #ff9800;
+            --phet-green: #4caf50;
+            --phet-danger: #d32f2f;
+            --radius: 4px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: "Arial Black", Gadget, sans-serif;
+            background-color: var(--phet-workspace-bg);
+            color: var(--phet-text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        header.phet-nav {
+            background-color: var(--phet-header-bg);
+            color: var(--phet-text-light);
+            padding: 6px 14px;
+            font-size: 1.1rem;
+            border-bottom: 3px solid var(--phet-orange);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        .app-workspace {
+            display: grid;
+            grid-template-columns: 1fr 250px;
+            flex: 1;
+            height: calc(100vh - 38px);
+            min-height: 0;
+        }
+
+        .simulation-viewport {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            min-width: 0;
+            gap: 12px;
+        }
+
+        .tracks-wrapper {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            gap: 12px;
+        }
+
+        .track-window {
+            position: relative;
+            background-color: var(--phet-canvas-bg);
+            border: 4px solid var(--phet-border);
+            border-radius: var(--radius);
+            width: 100%;
+            height: 160px;
+            box-shadow: inset 0 5px 15px rgba(0,0,0,0.15);
+            overflow: hidden;
+            transition: height 0.2s ease;
+        }
+
+        .tracks-wrapper.single-mode .track-window {
+            height: 320px;
+        }
+
+        .track-title-tag {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            background: rgba(0, 34, 68, 0.75);
+            color: white;
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 2px;
+            z-index: 8;
+        }
+
+        .ground-axis {
+            position: absolute;
+            bottom: 40px;
+            left: 4%;
+            width: 92%;
+            height: 8px;
+            background-color: #5d4037;
+            border-top: 3px solid #8d6e63;
+            z-index: 4;
+        }
+        .tracks-wrapper.single-mode .ground-axis { bottom: 70px; }
+
+        .grass-layer {
+            position: absolute;
+            bottom: 48px;
+            left: 4%;
+            width: 92%;
+            height: 4px;
+            background-color: #7cb342;
+            z-index: 5;
+        }
+        .tracks-wrapper.single-mode .grass-layer { bottom: 78px; }
+
+        .ghost-path-container {
+            position: absolute;
+            bottom: 52px;
+            left: 4%;
+            width: 92%;
+            height: 80px;
+            display: flex;
+            pointer-events: none;
+            z-index: 2;
+        }
+        .tracks-wrapper.single-mode .ghost-path-container { bottom: 82px; height: 140px; }
+
+        .ghost-segment {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 6px;
+            font-size: 0.75rem;
+            font-weight: 900;
+            color: #1a252f;
+            border-left: 2px dashed rgba(0,0,0,0.25);
+            border-right: 2px dashed rgba(0,0,0,0.25);
+            opacity: 0.5;
+        }
+
+        .ticks-container {
+            position: absolute;
+            bottom: 5px;
+            left: 4%;
+            width: 92%;
+            height: 35px;
+            z-index: 6;
+        }
+        .tracks-wrapper.single-mode .ticks-container { bottom: 15px; }
+
+        .tick-mark {
+            position: absolute;
+            width: 3px;
+            height: 10px;
+            background-color: var(--phet-header-bg);
+            transform: translateX(-50%);
+        }
+
+        .tick-label {
+            position: absolute;
+            top: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            transform: translateX(-50%);
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 1px 3px;
+            border: 1px solid var(--phet-border);
+            border-radius: 2px;
+            white-space: nowrap;
+        }
+
+        .actor-token {
+            position: absolute;
+            bottom: 52px;
+            left: 4%;
+            width: 60px;
+            height: 60px;
+            font-size: 3.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: translateX(-50%);
+            will-change: left;
+            z-index: 10;
+            filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.25));
+        }
+        .tracks-wrapper.single-mode .actor-token { bottom: 82px; font-size: 4.2rem; width: 70px; height: 70px; }
+        
+        .tracks-wrapper.relative-active .actor-token {
+            cursor: grab;
+        }
+        .tracks-wrapper.relative-active .actor-token:active {
+            cursor: grabbing;
+        }
+        
+        .facing-left { transform: translateX(-50%) scaleX(-1) !important; }
+        .facing-right { transform: translateX(-50%) scaleX(1) !important; }
+
+        /* TELEMETRY DISPLAY GRID */
+        .dashboard-matrix {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            width: 100%;
+        }
+
+        .relative-panel-header {
+            grid-column: span 4;
+            background: #001122;
+            color: #ffeb3b;
+            padding: 4px 12px;
+            border: 2px solid #667788;
+            border-radius: var(--radius);
+            text-align: center;
+            font-size: 1rem;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .dash-cell {
+            background-color: #000000;
+            border: 3px solid #667788;
+            border-radius: var(--radius);
+            padding: 6px;
+            text-align: center;
+            color: #00ffcc;
+            box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);
+        }
+        
+        .dashboard-matrix.relative-layout-active {
+            grid-template-columns: repeat(3, 1fr);
+        }
+        .dashboard-matrix.relative-layout-active .relative-panel-header {
+            grid-column: span 3;
+        }
+
+        .dash-label { 
+            display: block; 
+            font-size: 0.7rem; 
+            font-weight: bold; 
+            color: #88aabb; 
+            text-transform: uppercase;
+        }
+        .dash-num { font-family: "Courier New", Courier, monospace; font-size: 1.5rem; font-weight: bold; }
+        .dash-unit { color: #88aabb; font-size: 0.75rem; }
+
+        /* RIGHT CONTROL POD */
+        .controls-panel {
+            background-color: var(--phet-panel-bg);
+            border-left: 4px solid var(--phet-border);
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow-y: auto;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 0.85rem;
+        }
+
+        .controls-panel h2 {
+            font-family: "Arial Black", Gadget, sans-serif;
+            font-size: 0.95rem;
+            text-align: center;
+            background-color: #ccddee;
+            padding: 3px;
+            border: 2px solid var(--phet-border);
+            border-radius: var(--radius);
+        }
+
+        .control-group-box {
+            background: #ffffff;
+            border: 2px solid var(--phet-border);
+            border-radius: var(--radius);
+            padding: 6px;
+        }
+
+        .mode-toggle-btn {
+            width: 100%;
+            padding: 6px;
+            background: #cbd5e1;
+            border: 2px solid var(--phet-border);
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: var(--radius);
+            margin-bottom: 4px;
+        }
+        .mode-toggle-btn.active {
+            background: var(--phet-orange);
+            color: white;
+        }
+
+        .inputs-scroll-deck {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .segment-card {
+            background-color: #f4f8fb;
+            border: 2px solid #aabbcc;
+            border-radius: var(--radius);
+            padding: 6px;
+        }
+
+        .segment-title { font-weight: bold; color: var(--phet-header-bg); margin-bottom: 4px; font-size: 0.8rem; text-decoration: underline; }
+        .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        
+        label { display: block; font-size: 0.7rem; font-weight: bold; margin-bottom: 1px; color: #334455; }
+        input[type="number"], select {
+            width: 100%; 
+            padding: 3px; 
+            border: 2px solid var(--phet-border); 
+            border-radius: var(--radius); 
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .chk-line { display: flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 0.75rem; font-weight: bold; cursor: pointer; }
+        .hidden { display: none !important; }
+
+        .action-cluster { 
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-top: auto; 
+            background: #ccddee;
+            padding: 6px;
+            border: 2px solid var(--phet-border);
+            border-radius: var(--radius);
+        }
+        
+        .btn {
+            padding: 8px; 
+            border: 2px solid var(--phet-border); 
+            border-radius: var(--radius); 
+            font-family: "Arial Black", Gadget, sans-serif;
+            font-size: 0.9rem; 
+            cursor: pointer; 
+            color: black;
+            box-shadow: 0 2px 0 var(--phet-border);
+            transform: translateY(-1px);
+        }
+        .btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 0px 0 var(--phet-border);
+        }
+        .btn-go { background-color: var(--phet-yellow); }
+        .btn-pause { background-color: var(--phet-orange); color: white; }
+        .btn-reset { background-color: #e0e0e0; grid-column: span 2; }
+        .btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        .inline-err { color: var(--phet-danger); font-size: 0.65rem; margin-top: 1px; display: block; font-weight: bold; }
+
+        @media (max-width: 768px) {
+            .app-workspace { grid-template-columns: 1fr; overflow-y: auto; }
+            body { overflow-y: auto; height: auto; }
+            .controls-panel { border-left: none; border-top: 4px solid var(--phet-border); width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="phet-nav">
+        <div>Motion & Relative Velocity Lab</div>
+        <div style="font-size:0.8rem; background: var(--phet-orange); padding: 1px 6px; border-radius:3px;">Kinematics Sandbox</div>
+    </header>
+
+    <div class="app-workspace">
+        
+        <!-- LEFT SIMULATION VIEWPORT -->
+        <main class="simulation-viewport">
+            
+            <div class="tracks-wrapper single-mode" id="tracks-container-wrapper">
+                <!-- Track A -->
+                <div class="track-window" id="track-window-a">
+                    <div class="track-title-tag id-tag-a" id="tag-track-a">Track System</div>
+                    <div class="ghost-path-container" id="ghost-container-a"></div>
+                    <div class="ground-axis"></div>
+                    <div class="grass-layer"></div>
+                    <div class="ticks-container" id="ticks-container-a"></div>
+                    <div class="actor-token" id="actor-a">⚽</div>
+                </div>
+
+                <!-- Track B -->
+                <div class="track-window hidden" id="track-window-b">
+                    <div class="track-title-tag">Track B</div>
+                    <div class="ghost-path-container" id="ghost-container-b"></div>
+                    <div class="ground-axis"></div>
+                    <div class="grass-layer"></div>
+                    <div class="ticks-container" id="ticks-container-b"></div>
+                    <div class="actor-token" id="actor-b">🦍</div>
+                </div>
+            </div>
+
+            <!-- Electronic Readout Matrix Dashboard -->
+            <div class="dashboard-matrix" id="dashboard-container">
+                <div class="relative-panel-header hidden" id="rel-header-panel">
+                    Relative Velocity (v<sub>A/B</sub> = v<sub>A</sub> - v<sub>B</sub>): <span id="ds-vrel">0.00</span> m/s
+                </div>
+                
+                <div class="dash-cell">
+                    <span class="dash-label">Time</span>
+                    <div><span class="dash-num" id="ds-t">0.00</span> <span class="dash-unit">s</span></div>
+                </div>
+                <div class="dash-cell" id="cell-mid-1">
+                    <span class="dash-label" id="lbl-mid-1">Distance</span>
+                    <div><span class="dash-num" id="ds-d">0.00</span> <span class="dash-unit" id="un-d">m</span></div>
+                </div>
+                <div class="dash-cell" id="cell-mid-2">
+                    <span class="dash-label" id="lbl-mid-2">Velocity</span>
+                    <div><span class="dash-num" id="ds-v">0.00</span> <span class="dash-unit" id="un-v">m/s</span></div>
+                </div>
+                <div class="dash-cell" id="cell-end">
+                    <span class="dash-label" id="lbl-end">Acceleration</span>
+                    <div><span class="dash-num" id="ds-a">0.00</span> <span class="dash-unit" id="un-a">m/s²</span></div>
+                </div>
+            </div>
+            
+        </main>
+
+        <!-- RIGHT CONTROL PANEL POD -->
+        <aside class="controls-panel">
+            <h2>Lab Mode</h2>
+            <div class="control-group-box" style="padding:4px; display:flex; gap:4px;">
+                <button class="mode-toggle-btn active" id="mode-std-btn">Standard</button>
+                <button class="mode-toggle-btn" id="mode-rel-btn">Relative</button>
+            </div>
+
+            <h2>Setup Pod</h2>
+            
+            <!-- CONTROLS CONTAINER: STANDARD ENVIRONMENT -->
+            <div id="panel-std-controls">
+                <div class="control-group-box" style="margin-bottom:8px;">
+                    <label>Subject:</label>
+                    <select id="obj-select-a">
+                        <option value="⚽">⚽ Soccer Ball</option>
+                        <option value="🚶">🚶 Moving Person</option>
+                        <option value="🦍">🦍 Gorilla</option>
+                        <option value="🚀">🚀 Space Rocket</option>
+                        <option value="🐈">🐈 Running Cat</option>
+                    </select>
+                </div>
+                <div class="control-group-box" style="margin-bottom:8px;">
+                    <label>Blocks (1-5):</label>
+                    <input type="number" id="sec-count" min="1" max="5" value="1">
+                </div>
+            </div>
+
+            <!-- CONTROLS CONTAINER: RELATIVE ENVIRONMENT -->
+            <div id="panel-rel-controls" class="hidden">
+                <div class="control-group-box" style="margin-bottom:8px;">
+                    <div class="segment-title">Subject A Configuration</div>
+                    <label>Object A Type:</label>
+                    <select id="obj-rel-select-a" style="margin-bottom:4px;">
+                        <option value="⚽">⚽ Soccer Ball</option>
+                        <option value="🚶" selected>🚶 Moving Person</option>
+                        <option value="🦍">🦍 Gorilla</option>
+                        <option value="🚀">🚀 Space Rocket</option>
+                        <option value="🐈">🐈 Running Cat</option>
+                    </select>
+                    <label>Constant Velocity (m/s):</label>
+                    <input type="number" id="val-rel-v-a" value="4" step="any">
+                    <span style="font-size:0.65rem; color:var(--phet-text); font-weight:normal;">Use (-) for Left direction</span>
+                </div>
+
+                <div class="control-group-box" style="margin-bottom:8px;">
+                    <div class="segment-title">Subject B Configuration</div>
+                    <label>Object B Type:</label>
+                    <select id="obj-rel-select-b" style="margin-bottom:4px;">
+                        <option value="⚽">⚽ Soccer Ball</option>
+                        <option value="🚶">🚶 Moving Person</option>
+                        <option value="🦍" selected>🦍 Gorilla</option>
+                        <option value="🚀">🚀 Space Rocket</option>
+                        <option value="🐈">🐈 Running Cat</option>
+                    </select>
+                    <label>Constant Velocity (m/s):</label>
+                    <input type="number" id="val-rel-v-b" value="-2" step="any">
+                </div>
+            </div>
+
+            <div class="inputs-scroll-deck" id="inputs-deck"></div>
+
+            <div class="control-group-box">
+                <label>Time Warp:</label>
+                <select id="speed-select">
+                    <option value="0.5">0.5×</option>
+                    <option value="1.0" selected>1.0×</option>
+                    <option value="2.0">2.0×</option>
+                    <option value="4.0">4.0×</option>
+                </select>
+            </div>
+
+            <div class="action-cluster">
+                <button class="btn btn-go" id="btn-start">Start</button>
+                <button class="btn btn-pause" id="btn-pause" disabled>Pause</button>
+                <button class="btn btn-reset" id="btn-reset">Reset All</button>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        const State = {
+            currentMode: 'standard',
+            isRunning: false,
+            isPaused: false,
+            speedFactor: 1.0,
+            
+            elapsedTime: 0.0,
+            currentDistance: 0.0,
+            currentVelocity: 0.0,
+            currentAcceleration: 0.0,
+            
+            // Relative mode parameters configuration entries
+            posA: 0.0,
+            posB: 0.0,
+            velA: 0.0,
+            velB: 0.0,
+            startPosA: 0.0, // Custom initialization configuration tracking variables via drag drops
+            startPosB: 40.0,
+            relativeWindowDistance: 60.0,
+            relativeDuration: 12.0,
+            
+            totalDistance: 0.0,
+            totalDuration: 0.0,
+            segments: [],
+            
+            activeSegmentIdx: 0,
+            segStartTime: 0.0,
+            segStartDist: 0.0,
+            
+            lastTimestamp: 0,
+            animFrameId: null,
+            
+            ghostColors: ['#e1bee7', '#c8e6c9', '#ffe0b2', '#b3e5fc', '#ffcdd2']
+        };
+
+        const DOM = {
+            modeStdBtn: document.getElementById('mode-std-btn'),
+            modeRelBtn: document.getElementById('mode-rel-btn'),
+            panelStdControls: document.getElementById('panel-std-controls'),
+            panelRelControls: document.getElementById('panel-rel-controls'),
+            tracksWrapper: document.getElementById('tracks-container-wrapper'),
+            trackWindowA: document.getElementById('track-window-a'),
+            trackWindowB: document.getElementById('track-window-b'),
+            tagTrackA: document.getElementById('tag-track-a'),
+            relHeaderPanel: document.getElementById('rel-header-panel'),
+            dashboardContainer: document.getElementById('dashboard-container'),
+            
+            cellMid1: document.getElementById('cell-mid-1'),
+            cellMid2: document.getElementById('cell-mid-2'),
+            cellEnd: document.getElementById('cell-end'),
+            lblMid1: document.getElementById('lbl-mid-1'),
+            lblMid2: document.getElementById('lbl-mid-2'),
+            lblEnd: document.getElementById('lbl-end'),
+            unD: document.getElementById('un-d'),
+            unV: document.getElementById('un-v'),
+            unA: document.getElementById('un-a'),
+            dsVrel: document.getElementById('ds-vrel'),
+
+            objSelectA: document.getElementById('obj-select-a'),
+            objRelSelectA: document.getElementById('obj-rel-select-a'),
+            objRelSelectB: document.getElementById('obj-rel-select-b'),
+            valRelVA: document.getElementById('val-rel-v-a'),
+            valRelVB: document.getElementById('val-rel-v-b'),
+
+            secCount: document.getElementById('sec-count'),
+            inputsDeck: document.getElementById('inputs-deck'),
+            speedSelect: document.getElementById('speed-select'),
+            btnStart: document.getElementById('btn-start'),
+            btnPause: document.getElementById('btn-pause'),
+            btnReset: document.getElementById('btn-reset'),
+            actorA: document.getElementById('actor-a'),
+            actorB: document.getElementById('actor-b'),
+            ghostContainerA: document.getElementById('ghost-container-a'),
+            ticksContainerA: document.getElementById('ticks-container-a'),
+            ticksContainerB: document.getElementById('ticks-container-b'),
+            dsT: document.getElementById('ds-t'),
+            dsD: document.getElementById('ds-d'),
+            dsV: document.getElementById('ds-v'),
+            dsA: document.getElementById('ds-a')
+        };
+
+        /* ==========================================================================
+           MODE MANAGEMENT SWITCHER
+           ========================================================================== */
+        function switchLabMode(targetMode) {
+            if (State.isRunning) handleResetSimulation();
+            State.currentMode = targetMode;
+
+            if (targetMode === 'standard') {
+                DOM.modeStdBtn.classList.add('active');
+                DOM.modeRelBtn.classList.remove('active');
+                DOM.panelStdControls.classList.remove('hidden');
+                DOM.panelRelControls.classList.add('hidden');
+                DOM.tracksWrapper.classList.add('single-mode');
+                DOM.tracksWrapper.classList.remove('relative-active');
+                DOM.trackWindowB.classList.add('hidden');
+                DOM.tagTrackA.textContent = "Track System";
+                DOM.relHeaderPanel.classList.add('hidden');
+                
+                DOM.dashboardContainer.classList.remove('relative-layout-active');
+                DOM.cellMid1.classList.remove('hidden');
+                
+                DOM.lblMid1.textContent = "Distance";
+                DOM.lblMid2.textContent = "Velocity";
+                DOM.lblEnd.textContent = "Acceleration";
+                
+                DOM.unD.textContent = "m";
+                DOM.unV.textContent = "m/s";
+                DOM.unA.textContent = "m/s²";
+                
+                DOM.inputsDeck.classList.remove('hidden');
+                generateInputFields();
+            } else {
+                DOM.modeStdBtn.classList.remove('active');
+                DOM.modeRelBtn.classList.add('active');
+                DOM.panelStdControls.classList.add('hidden');
+                DOM.panelRelControls.classList.remove('hidden');
+                DOM.tracksWrapper.classList.remove('single-mode');
+                DOM.tracksWrapper.classList.add('relative-active');
+                DOM.trackWindowB.classList.remove('hidden');
+                DOM.tagTrackA.textContent = "Track A";
+                DOM.relHeaderPanel.classList.remove('hidden');
+                
+                // Hide position elements and restructure dashboard grids per requirements layout fixes
+                DOM.dashboardContainer.classList.add('relative-layout-active');
+                DOM.cellMid1.classList.add('hidden'); // Excludes Distance/Position output components fields
+                
+                DOM.lblMid2.textContent = "Velocity A";
+                DOM.lblEnd.textContent = "Velocity B";
+                
+                DOM.unV.textContent = "m/s";
+                DOM.unA.textContent = "m/s"; // Patched unit metrics fields configuration alignments labels
+                
+                DOM.inputsDeck.classList.add('hidden');
+                
+                // Reset custom coordinate alignments defaults parameters
+                State.startPosA = 10.0;
+                State.startPosB = 45.0;
+                
+                triggerRepaintCycle();
+            }
+        }
+
+        /* ==========================================================================
+           UI FIELD CARD INJECTIONS
+           ========================================================================== */
+        function generateInputFields() {
+            if (State.currentMode !== 'standard') return;
+            const count = Math.min(Math.max(parseInt(DOM.secCount.value) || 1, 1), 5);
+            const preservedData = scrapeFormInputs();
+            DOM.inputsDeck.innerHTML = '';
+
+            for (let i = 0; i < count; i++) {
+                const old = preservedData[i] || { d: 10 * (i + 1), t: 5, accel: false, u: 0, v: 10 };
+                const card = document.createElement('div');
+                card.className = 'segment-card';
+                card.dataset.idx = i;
+                card.innerHTML = `
+                    <div class="segment-title">Section ${i + 1}</div>
+                    <div class="input-row">
+                        <div>
+                            <label>Dist (m)</label>
+                            <input type="number" class="val-d" step="any" value="${old.d}">
+                            <span class="inline-err hidden" id="err-d-${i}"></span>
+                        </div>
+                        <div class="time-field-wrapper ${old.accel ? 'hidden' : ''}">
+                            <label>Time (s)</label>
+                            <input type="number" class="val-t" step="any" value="${old.t}">
+                            <span class="inline-err hidden" id="err-t-${i}"></span>
+                        </div>
+                    </div>
+                    <label class="chk-line">
+                        <input type="checkbox" class="val-chk" ${old.accel ? 'checked' : ''}> Accelerate
+                    </label>
+                    <div class="input-row accel-fields ${old.accel ? '' : 'hidden'}" style="margin-top: 4px;">
+                        <div>
+                            <label>Init u</label>
+                            <input type="number" class="val-u" step="any" value="${old.u}">
+                            <span class="inline-err hidden" id="err-u-${i}"></span>
+                        </div>
+                        <div>
+                            <label>Final v</label>
+                            <input type="number" class="val-v" step="any" value="${old.v}">
+                            <span class="inline-err hidden" id="err-acc-${i}"></span>
+                        </div>
+                    </div>
+                `;
+
+                card.querySelector('.val-chk').addEventListener('change', (e) => {
+                    card.querySelector('.accel-fields').classList.toggle('hidden', !e.target.checked);
+                    card.querySelector('.time-field-wrapper').classList.toggle('hidden', e.target.checked);
+                    triggerRepaintCycle();
+                });
+                
+                card.querySelectorAll('input').forEach(inp => {
+                    inp.addEventListener('input', triggerRepaintCycle);
+                });
+
+                DOM.inputsDeck.appendChild(card);
+            }
+            triggerRepaintCycle();
+        }
+
+        function scrapeFormInputs() {
+            if (State.currentMode !== 'standard') return [];
+            return Array.from(DOM.inputsDeck.querySelectorAll('.segment-card')).map(card => ({
+                d: parseFloat(card.querySelector('.val-d').value),
+                t: parseFloat(card.querySelector('.val-t').value),
+                accel: card.querySelector('.val-chk').checked,
+                u: parseFloat(card.querySelector('.val-u').value) || 0,
+                v: parseFloat(card.querySelector('.val-v').value) || 0
+            }));
+        }
+
+        function clearValidationErrorBanners() {
+            DOM.inputsDeck.querySelectorAll('.inline-err').forEach(el => el.classList.add('hidden'));
+        }
+
+        /* ==========================================================================
+           KINEMATICS ENGINE COMPILATION
+           ========================================================================== */
+        function compileKinematicsTrajectory(suppressErrors = false) {
+            if (State.currentMode === 'relative') {
+                State.velA = parseFloat(DOM.valRelVA.value) || 0;
+                State.velB = parseFloat(DOM.valRelVB.value) || 0;
+                State.totalDistance = State.relativeWindowDistance;
+                State.totalDuration = State.relativeDuration;
+                
+                State.posA = State.startPosA;
+                State.posB = State.startPosB;
+                return true;
+            }
+
+            const rawInputs = scrapeFormInputs();
+            State.segments = [];
+            State.totalDistance = 0;
+            State.totalDuration = 0;
+            let checksPassed = true;
+
+            if (!suppressErrors) clearValidationErrorBanners();
+
+            rawInputs.forEach((input, idx) => {
+                if (isNaN(input.d) || input.d <= 0) {
+                    checksPassed = false;
+                    if (!suppressErrors) document.getElementById(`err-d-${idx}`).textContent = "Must be > 0", document.getElementById(`err-d-${idx}`).classList.remove('hidden');
+                }
+
+                let segPhysics = {
+                    d: input.d || 0,
+                    t: 0,
+                    isAccelerated: input.accel,
+                    a: 0, u: 0, v: 0
+                };
+
+                if (!input.accel) {
+                    if (isNaN(input.t) || input.t <= 0) {
+                        checksPassed = false;
+                        if (!suppressErrors) document.getElementById(`err-t-${idx}`).textContent = "Must be > 0", document.getElementById(`err-t-${idx}`).classList.remove('hidden');
+                    }
+                    segPhysics.t = input.t || 1;
+                    const constantV = segPhysics.d / segPhysics.t;
+                    segPhysics.u = constantV;
+                    segPhysics.v = constantV;
+                    segPhysics.a = 0;
+                } else {
+                    if (isNaN(input.u) || input.u < 0) {
+                        checksPassed = false;
+                        if (!suppressErrors) document.getElementById(`err-u-${idx}`).textContent = "Must be ≥ 0", document.getElementById(`err-u-${idx}`).classList.remove('hidden');
+                    }
+                    if (isNaN(input.v) || input.v < 0) {
+                        checksPassed = false;
+                        if (!suppressErrors) document.getElementById(`err-acc-${idx}`).textContent = "Must be ≥ 0", document.getElementById(`err-acc-${idx}`).classList.remove('hidden');
+                    }
+
+                    segPhysics.u = input.u;
+                    segPhysics.v = input.v;
+
+                    if (segPhysics.d > 0) {
+                        segPhysics.a = (Math.pow(input.v, 2) - Math.pow(input.u, 2)) / (2 * segPhysics.d);
+                    } else {
+                        segPhysics.a = 0;
+                    }
+
+                    if (Math.abs(segPhysics.a) < 1e-6) {
+                        if (segPhysics.u === 0) {
+                            checksPassed = false;
+                            if (!suppressErrors) document.getElementById(`err-acc-${idx}`).textContent = "Static (u=0, v=0)", document.getElementById(`err-acc-${idx}`).classList.remove('hidden');
+                            segPhysics.t = 1;
+                        } else {
+                            segPhysics.t = segPhysics.d / segPhysics.u;
+                        }
+                    } else {
+                        segPhysics.t = (segPhysics.v - segPhysics.u) / segPhysics.a;
+                        
+                        if (segPhysics.t <= 0) {
+                            checksPassed = false;
+                            if (!suppressErrors) document.getElementById(`err-acc-${idx}`).textContent = "Vector error", document.getElementById(`err-acc-${idx}`).classList.remove('hidden');
+                        }
+                    }
+                }
+
+                State.segments.push(segPhysics);
+                State.totalDistance += segPhysics.d;
+                State.totalDuration += segPhysics.t;
+            });
+
+            return checksPassed;
+        }
+
+        /* ==========================================================================
+           VISUAL AXIS SCALING REBUILD PIPELINES
+           ========================================================================== */
+        function getOptimalTicksInterval(totalDist) {
+            if (totalDist <= 5) return 1;
+            if (totalDist <= 10) return 1;
+            if (totalDist <= 20) return 2;
+            if (totalDist <= 50) return 5;
+            if (totalDist <= 100) return 10;
+            if (totalDist <= 250) return 25;
+            if (totalDist <= 500) return 50;
+            return 100;
+        }
+
+        function rebuildVisualScaleSystem() {
+            DOM.ticksContainerA.innerHTML = '';
+            DOM.ticksContainerB.innerHTML = '';
+            DOM.ghostContainerA.innerHTML = '';
+            
+            const dMax = State.totalDistance;
+            if (isNaN(dMax) || dMax <= 0) return;
+
+            if (State.currentMode === 'standard') {
+                State.segments.forEach((seg, index) => {
+                    if (seg.d <= 0) return;
+                    const ratioWidth = (seg.d / dMax) * 100;
+                    const ghostSegmentNode = document.createElement('div');
+                    ghostSegmentNode.className = 'ghost-segment';
+                    ghostSegmentNode.style.width = `${ratioWidth}%`;
+                    ghostSegmentNode.style.backgroundColor = State.ghostColors[index % State.ghostColors.length];
+                    
+                    const labelText = seg.isAccelerated ? `a=${seg.a.toFixed(1)}m/s²` : `v=${seg.u.toFixed(1)}m/s`;
+                    ghostSegmentNode.innerHTML = `<div>B${index + 1}</div><div style="font-size:0.65rem;font-weight:normal;">${labelText}<br>t=${seg.t.toFixed(1)}s</div>`;
+                    DOM.ghostContainerA.appendChild(ghostSegmentNode);
+                });
+            }
+
+            const interval = getOptimalTicksInterval(dMax);
+            const marksList = [];
+
+            for (let currentMark = 0; currentMark <= dMax; currentMark += interval) {
+                marksList.push(currentMark);
+            }
+            if (marksList[marksList.length - 1] !== dMax) {
+                marksList.push(dMax);
+            }
+
+            marksList.forEach(value => {
+                const percentPosition = (value / dMax) * 100;
+                
+                const tickBarA = document.createElement('div');
+                tickBarA.className = 'tick-mark';
+                tickBarA.style.left = `${percentPosition}%`;
+                DOM.ticksContainerA.appendChild(tickBarA);
+
+                const labelA = document.createElement('div');
+                labelA.className = 'tick-label';
+                labelA.style.left = `${percentPosition}%`;
+                labelA.textContent = `${value.toFixed(0)} m`;
+                DOM.ticksContainerA.appendChild(labelA);
+
+                if (State.currentMode === 'relative') {
+                    const tickBarB = document.createElement('div');
+                    tickBarB.className = 'tick-mark';
+                    tickBarB.style.left = `${percentPosition}%`;
+                    DOM.ticksContainerB.appendChild(tickBarB);
+
+                    const labelB = document.createElement('div');
+                    labelB.className = 'tick-label';
+                    labelB.style.left = `${percentPosition}%`;
+                    labelB.textContent = `${value.toFixed(0)} m`;
+                    DOM.ticksContainerB.appendChild(labelB);
+                }
+            });
+        }
+
+        function triggerRepaintCycle() {
+            compileKinematicsTrajectory(true);
+            rebuildVisualScaleSystem();
+            repaintActorPositionFrame();
+        }
+
+        /* ==========================================================================
+           ANIMATION RENDERING PROCESSING PIPELINES
+           ========================================================================== */
+        function updateTelemetryDashboard() {
+            DOM.dsT.textContent = State.elapsedTime.toFixed(2);
+            
+            if (State.currentMode === 'standard') {
+                DOM.dsD.textContent = State.currentDistance.toFixed(2);
+                DOM.dsV.textContent = State.currentVelocity.toFixed(2);
+                DOM.dsA.textContent = State.currentAcceleration.toFixed(2);
+            } else {
+                // Sinks values arrays targeting only velocities markers outputs configurations matrices
+                DOM.dsV.textContent = State.velA.toFixed(2); 
+                DOM.dsA.textContent = State.velB.toFixed(2); 
+                
+                const relativeVelocityScalar = State.velA - State.velB;
+                DOM.dsVrel.textContent = relativeVelocityScalar.toFixed(2);
+            }
+        }
+
+        function repaintActorPositionFrame() {
+            if (State.totalDistance <= 0) return;
+            
+            if (State.currentMode === 'standard') {
+                const clampRatio = Math.min(Math.max(State.currentDistance / State.totalDistance, 0), 1);
+                const pct = 4 + (clampRatio * 92);
+                DOM.actorA.style.left = `${pct}%`;
+            } else {
+                const ratioA = Math.min(Math.max(State.posA / State.totalDistance, 0), 1);
+                const ratioB = Math.min(Math.max(State.posB / State.totalDistance, 0), 1);
+                
+                DOM.actorA.style.left = `${4 + (ratioA * 92)}%`;
+                DOM.actorB.style.left = `${4 + (ratioB * 92)}%`;
+            }
+        }
+
+        function runFramePhysicsStep(timestamp) {
+            if (!State.isRunning || State.isPaused) return;
+
+            const deltaMs = timestamp - State.lastTimestamp;
+            State.lastTimestamp = timestamp;
+
+            State.elapsedTime += (deltaMs / 1000) * State.speedFactor;
+
+            if (State.elapsedTime >= State.totalDuration) {
+                State.elapsedTime = State.totalDuration;
+                computeInstantaneousKinematics(State.elapsedTime);
+                updateTelemetryDashboard();
+                repaintActorPositionFrame();
+                handleSimulationCompletion();
+                return;
+            }
+
+            computeInstantaneousKinematics(State.elapsedTime);
+            updateTelemetryDashboard();
+            repaintActorPositionFrame();
+
+            State.animFrameId = requestAnimationFrame(runFramePhysicsStep);
+        }
+
+        function computeInstantaneousKinematics(currentTimePoint) {
+            if (State.currentMode === 'relative') {
+                // Evaluate positions linearly relative to their starting coordinate parameters
+                State.posA = State.startPosA + (State.velA * currentTimePoint);
+                State.posB = State.startPosB + (State.velB * currentTimePoint);
+                return;
+            }
+
+            let cumulatedTime = 0;
+            let cumulatedDistance = 0;
+
+            for (let i = 0; i < State.segments.length; i++) {
+                const seg = State.segments[i];
+                if (currentTimePoint <= cumulatedTime + seg.t || i === State.segments.length - 1) {
+                    State.activeSegmentIdx = i;
+                    State.segStartTime = cumulatedTime;
+                    State.segStartDist = cumulatedDistance;
+                    break;
+                }
+                cumulatedTime += seg.t;
+                cumulatedDistance += seg.d;
+            }
+
+            const activeSeg = State.segments[State.activeSegmentIdx];
+            const segmentLocalTime = currentTimePoint - State.segStartTime;
+
+            State.currentAcceleration = activeSeg.a;
+
+            if (!activeSeg.isAccelerated) {
+                State.currentVelocity = activeSeg.u;
+                State.currentDistance = State.segStartDist + (activeSeg.u * segmentLocalTime);
+            } else {
+                State.currentVelocity = activeSeg.u + (activeSeg.a * segmentLocalTime);
+                State.currentDistance = State.segStartDist + (activeSeg.u * segmentLocalTime) + (0.5 * activeSeg.a * segmentLocalTime * segmentLocalTime);
+            }
+        }
+
+        /* ==========================================================================
+           INTERACTIVE MOUSE/TOUCH DRAGGING IMPLEMENTATION (Relative Mode Only)
+           ========================================================================== */
+        let activeDraggedActor = null;
+
+        function setupDragAndDropEngine() {
+            function initiateDragSequence(e, actorId) {
+                if (State.currentMode !== 'relative' || State.isRunning) return;
+                activeDraggedActor = actorId;
+                window.addEventListener('mousemove', executeDragMovement);
+                window.addEventListener('mouseup', terminateDragSequence);
+                window.addEventListener('touchmove', executeDragMovement, { passive: false });
+                window.addEventListener('touchend', terminateDragSequence);
+            }
+
+            DOM.actorA.addEventListener('mousedown', (e) => initiateDragSequence(e, 'A'));
+            DOM.actorB.addEventListener('mousedown', (e) => initiateDragSequence(e, 'B'));
+            DOM.actorA.addEventListener('touchstart', (e) => initiateDragSequence(e, 'A'));
+            DOM.actorB.addEventListener('touchstart', (e) => initiateDragSequence(e, 'B'));
+
+            function executeDragMovement(e) {
+                if (!activeDraggedActor) return;
+                if (e.cancelable) e.preventDefault();
+
+                // Compute bounding box metrics mapping pointers positions to scalar track percentages
+                const targetTrack = activeDraggedActor === 'A' ? DOM.trackWindowA : DOM.trackWindowB;
+                const boundingBox = targetTrack.getBoundingClientRect();
+                
+                // Align relative inner track scale bounds (4% left to 96% right margins padding)
+                const innerTrackLeft = boundingBox.left + (boundingBox.width * 0.04);
+                const innerTrackWidth = boundingBox.width * 0.92;
+                
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                let horizontalRatio = (clientX - innerTrackLeft) / innerTrackWidth;
+                horizontalRatio = Math.min(Math.max(horizontalRatio, 0), 1);
+
+                const mappedPhysicalDistance = horizontalRatio * State.relativeWindowDistance;
+
+                if (activeDraggedActor === 'A') {
+                    State.startPosA = mappedPhysicalDistance;
+                    State.posA = State.startPosA;
+                } else {
+                    State.startPosB = mappedPhysicalDistance;
+                    State.posB = State.startPosB;
+                }
+                
+                repaintActorPositionFrame();
+            }
+
+            function terminateDragSequence() {
+                activeDraggedActor = null;
+                window.removeEventListener('mousemove', executeDragMovement);
+                window.removeEventListener('mouseup', terminateDragSequence);
+                window.removeEventListener('touchmove', executeDragMovement);
+                window.removeEventListener('touchend', terminateDragSequence);
+            }
+        }
+
+        /* ==========================================================================
+           CONTROLS HANDLERS HANDLERS INTERACTION
+           ========================================================================== */
+        function handleStartSimulation() {
+            if (!State.isRunning) {
+                if (!compileKinematicsTrajectory(false)) return;
+
+                State.isRunning = true;
+                State.isPaused = false;
+                State.elapsedTime = 0;
+                State.lastTimestamp = performance.now();
+
+                freezeFormControls(true);
+                DOM.btnPause.disabled = false;
+                DOM.btnStart.textContent = 'Pause';
+                DOM.btnStart.classList.replace('btn-go', 'btn-pause');
+
+                State.animFrameId = requestAnimationFrame(runFramePhysicsStep);
+            } else {
+                handlePauseSimulation();
+            }
+        }
+
+        function handlePauseSimulation() {
+            if (!State.isRunning) return;
+
+            if (!State.isPaused) {
+                State.isPaused = true;
+                cancelAnimationFrame(State.animFrameId);
+                DOM.btnStart.textContent = 'Resume';
+                DOM.btnStart.classList.replace('btn-pause', 'btn-go');
+            } else {
+                State.isPaused = false;
+                State.lastTimestamp = performance.now();
+                DOM.btnStart.textContent = 'Pause';
+                DOM.btnStart.classList.replace('btn-go', 'btn-pause');
+                State.animFrameId = requestAnimationFrame(runFramePhysicsStep);
+            }
+        }
+
+        function handleResetSimulation() {
+            State.isRunning = false;
+            State.isPaused = false;
+            cancelAnimationFrame(State.animFrameId);
+
+            State.elapsedTime = 0;
+            State.currentDistance = 0;
+            State.currentVelocity = 0;
+            State.currentAcceleration = 0;
+            State.activeSegmentIdx = 0;
+
+            freezeFormControls(false);
+
+            DOM.btnStart.textContent = 'Start';
+            DOM.btnStart.classList.remove('btn-pause');
+            DOM.btnStart.classList.add('btn-go');
+            DOM.btnStart.disabled = false;
+            DOM.btnPause.disabled = true;
+
+            compileKinematicsTrajectory(true);
+            updateTelemetryDashboard();
+            repaintActorPositionFrame();
+            triggerRepaintCycle();
+        }
+
+        function handleSimulationCompletion() {
+            State.isRunning = false;
+            State.isPaused = false;
+            freezeFormControls(false);
+            DOM.btnStart.textContent = 'Start';
+            DOM.btnStart.classList.remove('btn-pause');
+            DOM.btnStart.classList.add('btn-go');
+            DOM.btnStart.disabled = true;
+            DOM.btnPause.disabled = true;
+        }
+
+        function freezeFormControls(disableState) {
+            DOM.secCount.disabled = disableState;
+            DOM.objSelectA.disabled = disableState;
+            DOM.objRelSelectA.disabled = disableState;
+            DOM.objRelSelectB.disabled = disableState;
+            DOM.valRelVA.disabled = disableState;
+            DOM.valRelVB.disabled = disableState;
+            DOM.modeStdBtn.disabled = disableState;
+            DOM.modeRelBtn.disabled = disableState;
+            DOM.inputsDeck.querySelectorAll('input, select').forEach(el => el.disabled = disableState);
+        }
+
+        function syncActorDisplaysAndDirections() {
+            if (State.currentMode === 'standard') {
+                const glyphA = DOM.objSelectA.value;
+                DOM.actorA.textContent = glyphA;
+                DOM.actorA.className = "actor-token " + ((glyphA==='🚶'||glyphA==='🐈'||glyphA==='🦍') ? "facing-left" : "facing-right");
+            } else {
+                const glyphA = DOM.objRelSelectA.value;
+                const glyphB = DOM.objRelSelectB.value;
+                DOM.actorA.textContent = glyphA;
+                DOM.actorB.textContent = glyphB;
+                
+                const velAValue = parseFloat(DOM.valRelVA.value) || 0;
+                const velBValue = parseFloat(DOM.valRelVB.value) || 0;
+
+                let baseAFlip = (glyphA==='🚶'||glyphA==='🐈'||glyphA==='🦍');
+                let shouldFlipA = velAValue >= 0 ? baseAFlip : !baseAFlip;
+                DOM.actorA.className = "actor-token " + (shouldFlipA ? "facing-left" : "facing-right");
+
+                let baseBFlip = (glyphB==='🚶'||glyphB==='🐈'||glyphB==='🦍');
+                let shouldFlipB = velBValue >= 0 ? baseBFlip : !baseBFlip;
+                DOM.actorB.className = "actor-token " + (shouldFlipB ? "facing-left" : "facing-right");
+            }
+        }
+
+        DOM.modeStdBtn.addEventListener('click', () => switchLabMode('standard'));
+        DOM.modeRelBtn.addEventListener('click', () => switchLabMode('relative'));
+        
+        DOM.secCount.addEventListener('input', generateInputFields);
+        DOM.objSelectA.addEventListener('change', syncActorDisplaysAndDirections);
+        DOM.objRelSelectA.addEventListener('change', syncActorDisplaysAndDirections);
+        DOM.objRelSelectB.addEventListener('change', syncActorDisplaysAndDirections);
+        
+        DOM.valRelVA.addEventListener('input', () => { triggerRepaintCycle(); syncActorDisplaysAndDirections(); });
+        DOM.valRelVB.addEventListener('input', () => { triggerRepaintCycle(); syncActorDisplaysAndDirections(); });
+        DOM.speedSelect.addEventListener('change', () => { State.speedFactor = parseFloat(DOM.speedSelect.value) || 1.0; });
+        
+        DOM.btnStart.addEventListener('click', handleStartSimulation);
+        DOM.btnPause.addEventListener('click', handlePauseSimulation);
+        DOM.btnReset.addEventListener('click', handleResetSimulation);
+
+        generateInputFields();
+        syncActorDisplaysAndDirections();
+        setupDragAndDropEngine();
+    </script>
+</body>
+</html>
